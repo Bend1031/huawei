@@ -16,8 +16,8 @@ with open('data\qos.csv', 'r', encoding="utf-8") as f:
 
             qos.append(row)
         # print(row[1])
-    N = []
-    Y = []
+    N = [] #边缘节点
+    Y = [] #qos值矩阵
     for item in qos:
         N.append(item[0])
         y = item[1:]
