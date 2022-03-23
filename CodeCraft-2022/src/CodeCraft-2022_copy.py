@@ -1,16 +1,16 @@
-#!/usr/bin/env python
 import csv
 import numpy as np
 import os
 import configparser
 
-
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+# base_path=""
 config = configparser.ConfigParser()
-config.read("/data/config.ini")
+config.read(base_path+"/data/config.ini")
 
 Q = config.getint('config', 'qos_constraint')
 
-with open('/data/demand.csv', 'r', encoding="utf-8") as f:
+with open(base_path+'/data/demand_copy.csv', 'r', encoding="utf-8") as f:
 
     # reader = csv.DictReader(f)
     reader = csv.reader(f, delimiter=",")
@@ -38,7 +38,7 @@ with open('/data/demand.csv', 'r', encoding="utf-8") as f:
     D = np.array(D)
 
 
-with open('/data/site_bandwidth.csv', 'r', encoding="utf-8") as f:
+with open(base_path+'/data/site_bandwidth.csv', 'r', encoding="utf-8") as f:
     reader = csv.reader(f, delimiter=",")
     C = {}
     for item in reader:
@@ -49,7 +49,7 @@ with open('/data/site_bandwidth.csv', 'r', encoding="utf-8") as f:
         else:
             C[item[0]] = item[1]
 
-with open('/data/qos.csv', 'r', encoding="utf-8") as f:
+with open(base_path+'/data/qos.csv', 'r', encoding="utf-8") as f:
     # reader = csv.DictReader(f)
     reader = csv.reader(f, delimiter=",")
     # item=np.array([[]])
@@ -116,12 +116,11 @@ class Edge_node:
         self.record.append(value)
 
 
-if os.path.exists("/output"):
+if os.path.exists("./output"):
     pass
 else:
-    os.makedirs(r"/output")
-
-with open("/output/solution.txt", "w") as f:
+    os.makedirs(r"./output")
+with open(base_path+"/output/solution.txt", "w") as f:
     for t_i in range(t):
 
         # 初始化边缘节点
@@ -144,15 +143,18 @@ with open("/output/solution.txt", "w") as f:
             for i in edge_sort:
                 weight_list.append(edge_dict[i].cap/cap_sum)
             need_list = [demand_t_i_sort[m] * i for i in weight_list]
+
             # 取整数
             need_list_int = list(map(int, need_list))
             need_list_int[-1] = need_list_int[-1] + \
                 demand_t_i_sort[m]-sum(need_list_int)
+
             # 对边缘节点分配流量
             log_list = []
             for i in range(len(edge_sort)):
                 edge_dict[edge_sort[i]].need = need_list_int[i]
                 log_list.append((edge_sort[i], need_list_int[i]))
+
         # 当前时刻流量分配完毕
         # 输出流量分配方案 M 行
             print(M_sort[m]+":", end="", file=f)
