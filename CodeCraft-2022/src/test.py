@@ -1,3 +1,3 @@
-C={'A': '430080', 'B': '430080'}
-for name,bandwidth in C.items():
-    print(i)
+with open("./output/solution.txt",'w') as f:
+    f.write('')
+

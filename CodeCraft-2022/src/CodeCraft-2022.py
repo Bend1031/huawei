@@ -1,8 +1,7 @@
 import csv
 import numpy as np
 from read_config import *
-
-
+import os
 with open('data\demand.csv', 'r', encoding="utf-8") as f:
 
     # reader = csv.DictReader(f)
@@ -69,7 +68,6 @@ with open('data\qos.csv', 'r', encoding="utf-8") as f:
     Y = np.array(Y)
 
 
-
 ##根据 qos 值确定客户节点能够连接的边缘节点与连接数
 num_of_connects = []
 N_avi_connect=[]#可供连接的节点
@@ -107,24 +105,47 @@ class Edge_node:
         self.cap -= value
         self.record.append(value)
 
-# 初始化边缘节点
-edge_dict={}
-for name,band_width in C.items():
-    Edge = Edge_node(name, int(band_width)) 
-    edge_dict[name]=Edge
 
-print()
+
+os.makedirs(r"./output")
 for t_i in range(t):
-    num_of_connects = []
-    link_index=[]
-    demand_t_i = D[t_i, ...]
-    for i in range(Y.shape[1]):
-        a = Y[..., i]
-        index = np.argwhere(a < Q)
-        link_index.append(index)
-        num_of_connects.append(len(index))
-        print()
-    sort_index = np.argsort(num_of_connects) # 从小到大的索引
-    M_sort=[M[i] for i in sort_index] # 分配顺序
 
-    print()
+    # 初始化边缘节点
+    edge_dict={}
+    for name,band_width in C.items():
+        edge_dict[name]=Edge_node(name, int(band_width)) 
+
+    demand_t_i = D[t_i, ...]
+    demand_t_i_sort = [demand_t_i[i] for i in sort_index]
+
+    # 对每个客户节点进行流量分配
+    for m in range(len(M_sort)):
+        # 该客户连接的边缘节点
+        edge_sort=connect[M_sort[m]]
+        # 对每个节点计算权重
+        cap_sum=0
+        weight_list=[]
+        for i in edge_sort:
+            cap_sum+=edge_dict[i].cap
+        for i in edge_sort:
+            weight_list.append(edge_dict[i].cap/cap_sum)
+        need_list=[demand_t_i_sort[m]* i for i in weight_list]
+        
+        # 对边缘节点分配流量
+        log_list=[]
+        for i in range(len(edge_sort)):
+            edge_dict[edge_sort[i]].need=int(need_list[i])
+            log_list.append((edge_sort[i],int(need_list[i])))
+
+        
+    # 当前时刻流量分配完毕
+    # 输出流量分配方案 M 行
+    with open("./output/solution.txt","a") as f:
+        for m in range(len(M_sort)):
+            print(M_sort[m]+":",end="",file=f)
+            for log in log_list:
+                if log==log_list[-1]:
+                    print("<"+log[0]+","+str(log[1])+">",file=f)
+                else:
+                    print("<"+log[0]+","+str(log[1])+">"+",",end="",file=f)
+            
