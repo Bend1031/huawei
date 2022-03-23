@@ -1,8 +1,17 @@
+ #!/usr/bin/env python
 import csv
 import numpy as np
-from read_config import *
 import os
-with open('data\demand.csv', 'r', encoding="utf-8") as f:
+import configparser
+
+base_path=os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+# base_path=""
+config = configparser.ConfigParser()
+config.read(base_path+"/data/config.ini")
+
+Q = config.getint('config', 'qos_constraint')
+
+with open(base_path+'/data/demand.csv', 'r', encoding="utf-8") as f:
 
     # reader = csv.DictReader(f)
     reader = csv.reader(f, delimiter=",")
@@ -30,7 +39,7 @@ with open('data\demand.csv', 'r', encoding="utf-8") as f:
     D = np.array(D)
     print()
 
-with open('data\site_bandwidth.csv', 'r', encoding="utf-8") as f:
+with open(base_path+'/data/site_bandwidth.csv', 'r', encoding="utf-8") as f:
     reader = csv.reader(f, delimiter=",")
     C = {}
     for item in reader:
@@ -41,7 +50,7 @@ with open('data\site_bandwidth.csv', 'r', encoding="utf-8") as f:
         else:
             C[item[0]] = item[1]
 
-with open('data\qos.csv', 'r', encoding="utf-8") as f:
+with open(base_path+'/data/qos.csv', 'r', encoding="utf-8") as f:
     # reader = csv.DictReader(f)
     reader = csv.reader(f, delimiter=",")
     # item=np.array([[]])
@@ -106,8 +115,11 @@ class Edge_node:
         self.record.append(value)
 
 
-
-os.makedirs(r"./output")
+if os.path.exists("./output"):
+    pass
+else:
+    os.makedirs(r"./output")
+    
 for t_i in range(t):
 
     # 初始化边缘节点
@@ -140,12 +152,22 @@ for t_i in range(t):
         
     # 当前时刻流量分配完毕
     # 输出流量分配方案 M 行
-    with open("./output/solution.txt","a") as f:
+    with open(base_path+"/output/solution.txt","a") as f:
+        
         for m in range(len(M_sort)):
             print(M_sort[m]+":",end="",file=f)
             for log in log_list:
+                end_str="<"+log[0]+","+str(log[1])+">"
                 if log==log_list[-1]:
-                    print("<"+log[0]+","+str(log[1])+">",file=f)
+                    # if t_i==t-1 & m==len(M_sort)-1:
+                    #     print(end_str,end="",file=f)
+                    # else:
+                    print(end_str,file=f)
                 else:
-                    print("<"+log[0]+","+str(log[1])+">"+",",end="",file=f)
-            
+                    print(end_str,end="",file=f)
+
+with open(base_path+"/output/solution.txt","a") as f:
+    f.seek(-1 ,os.SEEK_END)
+    if f.next() == "\n":
+        f.seek(-1 ,os.SEEK_END)
+        f.truncate()
